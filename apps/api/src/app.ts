@@ -37,14 +37,38 @@ export const sessionStore = MongoStore.create({
 });
 export const isAllowedOrigin = (origin?: string, host?: string): boolean => {
   if (!origin) return true;
-  return (
+  if (
     origin === config.APP_ORIGIN ||
-    origin === `https://${host}` ||
-    origin === `http://${host}` ||
+    (host && (origin === `https://${host}` || origin === `http://${host}`)) ||
     origin === "https://parvath-finance-crm-production.up.railway.app" ||
     origin.endsWith(".railway.app") ||
     origin.endsWith(".vercel.app")
-  );
+  ) {
+    return true;
+  }
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname.endsWith(".localhost")
+    ) {
+      return true;
+    }
+    if (
+      config.NODE_ENV !== "production" &&
+      (/^192\.168\.\d+\.\d+$/.test(hostname) ||
+        /^10\.\d+\.\d+\.\d+$/.test(hostname) ||
+        /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(hostname))
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 };
 
 export const app = express();
